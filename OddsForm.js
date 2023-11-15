@@ -8,8 +8,13 @@ export default function OddsForm() {
     const [winAmount, setWinAmount] = useState('');
     const [sportFilter, setSportFilter] = useState([]);
     const [filteredBets, setFilteredBets] = useState([]);
-    const sports = ['Football', 'NCAAF', 'Basketball', 'NCAAB', 'Baseball'];
-
+    const sports = [
+        { id: 'americanfootball_nfl', name: 'NFL Football' },
+        { id: 'americanfootball_ncaaf', name: 'NCAAF Football' },
+        { id: 'basketball_nba', name: 'NBA Basketball' },
+        { id: 'basketball_ncaab', name: 'NCAAB Basketball' },
+        { id: 'baseball_mlb', name: 'MLB Baseball' }
+    ];
     const toggleSport = (sport) => {
         if (sportFilter.includes(sport)){
             setSportFilter(sportFilter.filter(s => s !== sport));
@@ -19,7 +24,7 @@ export default function OddsForm() {
     };
     const handleSubmit = async () => {
         const apiUrl = 'http://10.0.0.12:3001/api/odds';
-        const bets = await fetchSuitableBets(apiUrl, betAmount, winAmount);
+        const bets = await fetchSuitableBets(apiUrl, betAmount, winAmount, sportFilter);
         setFilteredBets(bets);
     };
 
@@ -45,10 +50,10 @@ export default function OddsForm() {
                     {sports.map((sport, index) => (
                         <View key={index} style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 5 }}>
                             <Switch
-                                value={sportFilter.includes(sport)}
-                                onValueChange={() => toggleSport(sport)}
+                                value={sportFilter.includes(sport.id)}
+                                onValueChange={() => toggleSport(sport.id)}
                             />
-                            <Text>{sport}</Text>
+                            <Text>{sport.name}</Text>
                         </View>
                     ))}
                     <Button
@@ -64,6 +69,7 @@ export default function OddsForm() {
                                     {game.bookmakers
                                         .filter(bookmaker => bookmaker.key === 'draftkings')
                                         .flatMap(bookmaker => bookmaker.markets)
+                                        .filter(market => market.key === 'h2h')
                                         .map((market, idx) => (
                                             <View key={idx}>
                                                 <Text>Market: {market.key}</Text>
