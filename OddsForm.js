@@ -18,19 +18,11 @@ export default function OddsForm() {
         }
     };
     const handleSubmit = async () => {
-        
         const apiUrl = 'http://10.0.0.12:3001/api/odds';
-    
-        try {
-            const response = await fetch(apiUrl);
-            const oddsData = await response.json();
-    
-            const filteredData = oddsData.filter(game => sportFilter.includes(game.sport_key));
-            setFilteredBets(filteredData);
-        } catch (error) {
-            console.error('Error fetching odds:', error);
-        }
+        const bets = await fetchSuitableBets(apiUrl, betAmount, winAmount);
+        setFilteredBets(bets);
     };
+
     return (
         <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
             <ScrollView>

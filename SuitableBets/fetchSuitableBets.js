@@ -6,29 +6,39 @@ const fetchSuitableBets = async (apiUrl, betAmount, winAmount) => {
 
     try {
         const res = await fetch(apiUrl);
-        const games = await res.json();
+        const sports = await res.json();
         const desiredOdds = calculateOdds();
 
         if (desiredOdds) {
-            return games.reduce((acc, game) => {
-                const draftKingsBookmaker = game.bookmakers.find(bookmaker => bookmaker.key === 'draftkings');
-                if (draftKingsBookmaker) {
-                    const h2hMarket = draftKingsBookmaker.markets.find(market => market.key === 'h2h');
-                    if (h2hMarket) {
-                        const meetsOdds = h2hMarket.outcomes.some(outcome => outcome.price/100 >= desiredOdds);
-                        console.log(desiredOdds)
-                        if (meetsOdds) {
-                            acc.push(game);
+            return sports.flatMap(sport => 
+                sport.odds.reduce((acc, game) => {
+                    if (Array.isArray(game.bookmakers)) {
+                        const draftKingsBookmaker = game.bookmakers.find(bookmaker => bookmaker.key === 'draftkings');
+                        if (draftKingsBookmaker && Array.isArray(draftKingsBookmaker.markets)) {
+                            const h2hMarket = draftKingsBookmaker.markets.find(market => market.key === 'h2h');
+                            if (h2hMarket && Array.isArray(h2hMarket.outcomes)) {
+                                const meetsOdds = h2hMarket.outcomes.some(outcome => {
+                                    const decimalOdds = outcome.price / 100;
+                                    console.log(decimalOdds)
+                                    return decimalOdds >= desiredOdds;
+                                });
+
+                                if (meetsOdds) {
+                                    acc.push(game);
+                                }
+                            }
                         }
+                    } else {
+                        console.log('No bookmakers array found for game:', game);
                     }
-                }
-                return acc;
-            }, []);
+                    return acc;
+                }, [])
+            );
         }
-        return []; 
+        return [];
     } catch (err) {
         console.error(err);
-        return []; 
+        return [];
     }
 };
 
