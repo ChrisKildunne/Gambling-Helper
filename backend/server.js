@@ -43,31 +43,32 @@ app.post('/api/parlays', async (req, res) => {
         res.status(500).send('Error generating parlays');
     }
 });
-function allParlays(games){
+//sift through all the objects searching for draftkings h2h and spread prices
+const allParlays = (games) => {
+    // store all of those in an array??
     let parlays = []
-    for (let i = 2; i <= games.length; i++){
-        const combos = generateCombos(games, i)
-        for (const combo of combinations) {
-            const combinedOdds = calculateParlayOdds(combo);
-            parlays.push({ games: combo, combinedOdds });
+    games.forEach(game => {
+        const dkMarket = game.bookmakers.find(bkm => bkm.key === "draftkings");
+        if(dkMarket){
+            if(dkMarket){
+                dkMarket.markets.forEach(market => {
+                    if (market.key === "h2h" || market.key === "spread") {
+                        market.outcomes.forEach(outcome => {
+                            parlays.push({
+                                marketType: market.key,
+                                team: outcome.name,
+                                odds: outcome.price
+                            });
+                        })
+                    }
+                })
+            }
         }
-    }
-    return parlays
+    })
 }
-function calculateParlayOdds(parlay) {
-    return parlay.reduce((acc, game) => {
-        const draftKingsMarket = game.bookmakers.find(bkm => bkm.key === 'draftkings').markets.find(mkt => mkt.key === 'h2h');
-        const bestOdds = draftKingsMarket.outcomes.reduce((max, outcome) => Math.max(max, outcome.price), 0);
-        return acc * convertToDecimalOdds(bestOdds);
-    }, 1);
-}
-function convertToDecimalOdds(americanOdds) {
-    if (americanOdds >= 100) {
-        return americanOdds / 100 + 1;
-    } else {
-        return 100 / Math.abs(americanOdds) + 1;
-    }
-}
+//iterate through odds divide by 100
+//some function that multiplies every possible parlay for now up to three legs store in object?
+//send json 
 
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
