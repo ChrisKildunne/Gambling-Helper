@@ -9,10 +9,11 @@ app.use(express.json());
 
 app.get('/api/odds', async (req, res) => {
     const sports = ['americanfootball_nfl', 'basketball_nba', 'basketball_ncaab', 'baseball_mlb', 'americanfootball_ncaaf'];
-    const apiKey = '4db19d98cfdb95baf960ebdc176218b0'; 
+    const apiKey = process.env.API_KEY; // Use the API key from your environment variables
     const regions = 'us';
     const markets = 'h2h,spreads';
-    let allOdds = [];
+
+    let allRefinedOdds = [];
 
     for (const sport of sports){
         const url = `https://api.the-odds-api.com/v4/sports/${sport}/odds/`;
@@ -25,28 +26,21 @@ app.get('/api/odds', async (req, res) => {
 
         try {
             const response = await axios.get(url, { params });
-            allOdds.push({ sport: sport, odds: response.data})
+            const games = response.data;
+            const refinedOdds = allParlays(games);
+            allRefinedOdds = allRefinedOdds.concat(refinedOdds);
         } catch (error) {
             console.error(`Error fetching ${sport}:`, error);
-            res.status(500).json({ message: error.message });
         }
     }
-    res.json(allOdds);
+
+    res.json({ refinedOdds: allRefinedOdds });
 });
-app.post('/api/parlays', async (req, res) => {
-    const games = req.body.games;
-    try {
-        const parlays = allParlays(games);
-        res.json(parlays);
-    } catch (error) {
-        console.error('Error generating parlays:', error);
-        res.status(500).send('Error generating parlays');
-    }
-});
+
 //sift through all the objects searching for draftkings h2h and spread prices
 const allParlays = (games) => {
     // store all of those in an array??
-    let parlays = []
+    let refinedGames = []
     games.forEach(game => {
         const dkMarket = game.bookmakers.find(bkm => bkm.key === "draftkings");
         if(dkMarket){
@@ -54,10 +48,11 @@ const allParlays = (games) => {
                 dkMarket.markets.forEach(market => {
                     if (market.key === "h2h" || market.key === "spread") {
                         market.outcomes.forEach(outcome => {
-                            parlays.push({
+                            refinedGames.push({
                                 marketType: market.key,
                                 team: outcome.name,
-                                odds: outcome.price
+                                odds: outcome.price,
+                                sport: game.sport_key
                             });
                         })
                     }
@@ -65,11 +60,9 @@ const allParlays = (games) => {
             }
         }
     })
+    console.log(refinedGames,'refined games')
+    return refinedGames
 }
-//iterate through odds divide by 100
-//some function that multiplies every possible parlay for now up to three legs store in object?
-//send json 
-
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
 });
