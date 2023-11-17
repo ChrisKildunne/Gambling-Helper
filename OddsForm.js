@@ -23,9 +23,10 @@ export default function OddsForm() {
         }
     };
     const handleSubmit = async () => {
-        const apiUrl = 'http://10.0.0.12:3001/api/odds';
+        const apiUrl = 'http://10.0.0.12:3001/api/odds'; 
         const bets = await fetchSuitableBets(apiUrl, betAmount, winAmount, sportFilter);
         setFilteredBets(bets);
+        console.log('these are the filtered bets', filteredBets)
     };
 
     return (
@@ -60,30 +61,27 @@ export default function OddsForm() {
                         title="Submit"
                         onPress={handleSubmit}
                     />
+                                        <View>
                     {filteredBets.length > 0 && (
                         <View>
-                            <Text>Available Bets:</Text>
-                            {filteredBets.map((game, index) => (
+                            {filteredBets.map((parlay, index) => (
                                 <View key={index}>
-                                    <Text>{game.home_team} vs {game.away_team}</Text>
-                                    {game.bookmakers
-                                        .filter(bookmaker => bookmaker.key === 'draftkings')
-                                        .flatMap(bookmaker => bookmaker.markets)
-                                        .filter(market => market.key === 'h2h')
-                                        .map((market, idx) => (
-                                            <View key={idx}>
-                                                <Text>Market: {market.key}</Text>
-                                                {market.outcomes.map((outcome, oIdx) => (
-                                                    <Text key={oIdx}>{outcome.name} - Price: {outcome.price}</Text>
-                                                ))}
-                                            </View>
-                                        ))
-                                    }
+                                    {parlay.map((bet, betIndex) => (
+                                        <View key={betIndex}>
+                                            <Text>Team: {bet.team}</Text>
+                                            <Text>Market Type: {bet.marketType}</Text>
+                                            <Text>Odds: {bet.odds}</Text>
+                                            <Text>Sport: {bet.sport}</Text>
+                                            <Text>Combined Odds: {bet.combinedOdds}</Text>
+                                        </View>
+                                    ))}
                                 </View>
                             ))}
                         </View>
                     )}
                 </View>
+
+             </View>
             </ScrollView>
         </TouchableWithoutFeedback>
     );
