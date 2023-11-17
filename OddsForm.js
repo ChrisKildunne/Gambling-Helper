@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Keyboard, ScrollView, TouchableWithoutFeedback, Text, View, TextInput, Button, Switch } from 'react-native';
 import SuitableBets from './SuitableBets/SuitableBets.js';
-import fetchSuitableBets from './SuitableBets/fetchSuitableBets';
+import fetchSuitableParlays from './SuitableBets/fetchSuitableBets';
 
-export default function OddsForm() {
+export default function OddsForm({ qualifyingParlays }) {
     const [betAmount, setBetAmount] = useState('');
     const [winAmount, setWinAmount] = useState('');
     const [sportFilter, setSportFilter] = useState([]);
@@ -24,11 +24,23 @@ export default function OddsForm() {
     };
     const handleSubmit = async () => {
         const apiUrl = 'http://10.0.0.12:3001/api/odds'; 
-        const bets = await fetchSuitableBets(apiUrl, betAmount, winAmount, sportFilter);
-        setFilteredBets(bets);
-        console.log('these are the filtered bets', filteredBets)
+        try {
+            const qualifyingParlays = await fetchSuitableParlays(apiUrl, betAmount, winAmount, sportFilter);
+            console.log('Received qualifyingParlays:', qualifyingParlays);
+    
+            // Update the state with the fetched data
+            setFilteredBets(qualifyingParlays);
+    
+            console.log('Filtered bets state:', filteredBets); // Log the state after the update
+        } catch (error) {
+            console.error('Error fetching bets:', error);
+        }
     };
-
+    useEffect(() => {
+        console.log('Filtered bets state:', filteredBets);
+      }, [filteredBets]);
+    
+    
     return (
         <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
             <ScrollView>
@@ -61,26 +73,25 @@ export default function OddsForm() {
                         title="Submit"
                         onPress={handleSubmit}
                     />
-                                        <View>
-                    {filteredBets.length > 0 && (
-                        <View>
-                            {filteredBets.map((parlay, index) => (
-                                <View key={index}>
-                                    {parlay.map((bet, betIndex) => (
-                                        <View key={betIndex}>
-                                            <Text>Team: {bet.team}</Text>
-                                            <Text>Market Type: {bet.marketType}</Text>
-                                            <Text>Odds: {bet.odds}</Text>
-                                            <Text>Sport: {bet.sport}</Text>
-                                            <Text>Combined Odds: {bet.combinedOdds}</Text>
-                                        </View>
-                                    ))}
-                                </View>
-                            ))}
-                        </View>
-                    )}
-                </View>
+                     <View style={{ paddingTop: 70 }}>
 
+        {filteredBets.parlays.map((betGroup, groupIndex) => (
+          <View key={groupIndex}>
+            <Text style={{ paddingTop: 70 }}>Parlay:</Text>
+            {betGroup.map((bet, betIndex) => (
+                
+              <View key={betIndex}>
+                <Text>Market Type: {bet.marketType}</Text>
+                <Text>Odds: {bet.odds}</Text>
+                <Text>Sport: {bet.sport}</Text>
+                <Text>Team: {bet.team}</Text>
+                <Text>Combined Odds: {bet.combinedOdds}</Text>
+              </View>
+            ))}
+          </View>
+        ))}
+      </View>
+   
              </View>
             </ScrollView>
         </TouchableWithoutFeedback>

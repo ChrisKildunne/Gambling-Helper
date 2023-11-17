@@ -1,4 +1,6 @@
-const fetchDataAndGenerateParlays = async (apiUrl, betAmount, winAmount, sportFilter) => {
+import OddsForm from '../OddsForm';
+
+const fetchSuitableParlays = async (apiUrl, betAmount, winAmount, sportFilter) => {
     const calculateOdds = () => {
         if (!betAmount || !winAmount) return null;
         return parseFloat(winAmount) / parseFloat(betAmount);
@@ -15,13 +17,13 @@ const fetchDataAndGenerateParlays = async (apiUrl, betAmount, winAmount, sportFi
         const res = await fetch(url);
         const qualifyingParlays = await res.json();
 
-        console.log(qualifyingParlays);
+        return qualifyingParlays
     } catch (err) {
         console.error(err);
     }
 };
 
-export default fetchDataAndGenerateParlays;
+export default fetchSuitableParlays;
 
 
 //     return sports
