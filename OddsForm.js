@@ -7,7 +7,9 @@ export default function OddsForm({ qualifyingParlays }) {
     const [betAmount, setBetAmount] = useState('');
     const [winAmount, setWinAmount] = useState('');
     const [sportFilter, setSportFilter] = useState([]);
-    const [filteredBets, setFilteredBets] = useState([]);
+    const [filteredBets, setFilteredBets] = useState({parlays: []});
+    const [currentPage, setCurrentPage] = useState(1)
+
     const sports = [
         { id: 'americanfootball_nfl', name: 'NFL Football' },
         { id: 'americanfootball_ncaaf', name: 'NCAAF Football' },
@@ -23,7 +25,7 @@ export default function OddsForm({ qualifyingParlays }) {
         }
     };
     const handleSubmit = async () => {
-        const apiUrl = 'http://10.0.0.12:3001/api/odds'; 
+        const apiUrl = `http://10.0.0.12:3001/api/odds?page=${currentPage}&limit=10`;; 
         try {
             const qualifyingParlays = await fetchSuitableParlays(apiUrl, betAmount, winAmount, sportFilter);
             console.log('Received qualifyingParlays:', qualifyingParlays);
@@ -38,10 +40,23 @@ export default function OddsForm({ qualifyingParlays }) {
     };
     useEffect(() => {
         console.log('Filtered bets state:', filteredBets);
-      }, [filteredBets]);
+    }, [filteredBets]);
+    
+    useEffect(() => {
+        handleSubmit();
+    }, [currentPage]);
     
     
+    
+    const handleNextPage =() => {
+        setCurrentPage(current => current + 1)
+    }
+    
+    const handlePreviousPage =() => {
+        setCurrentPage(current => current - 1)
+    }
     return (
+        <>
         <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
             <ScrollView>
                 <View style={{ paddingTop: 70 }}>
@@ -51,50 +66,53 @@ export default function OddsForm({ qualifyingParlays }) {
                         keyboardType="numeric"
                         value={betAmount}
                         onChangeText={text => setBetAmount(text)}
-                    />
+                        />
                     <Text>And the amount you would like to win</Text>
                     <TextInput
                         style={{ height: 40, borderColor: 'gray', borderWidth: 1 }}
                         keyboardType="numeric"
                         value={winAmount}
                         onChangeText={text => setWinAmount(text)}
-                    />
+                        />
                     <Text>Select the sports you would like to bet on</Text>
                     {sports.map((sport, index) => (
                         <View key={index} style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 5 }}>
                             <Switch
                                 value={sportFilter.includes(sport.id)}
                                 onValueChange={() => toggleSport(sport.id)}
-                            />
+                                />
                             <Text>{sport.name}</Text>
                         </View>
                     ))}
                     <Button
                         title="Submit"
                         onPress={handleSubmit}
-                    />
+                        />
                      <View style={{ paddingTop: 70 }}>
+                    {filteredBets && Array.isArray(filteredBets.parlays) && filteredBets.parlays.map((betGroup, groupIndex) => (
+                    <View key={groupIndex}>
+                        <Text style={{ paddingTop: 70 }}>Parlay:</Text>
+                        {betGroup.map((bet, betIndex) => (
+                            <View key={betIndex}>
+                                <Text>Market Type: {bet.marketType}</Text>
+                                <Text>Odds: {bet.odds}</Text>
+                                <Text>Sport: {bet.sport}</Text>
+                                <Text>Team: {bet.team}</Text>
+                                <Text>Combined Odds: {bet.combinedOdds}</Text>
+                            </View>
+                        ))}
+                    </View>
+                ))}
+            </View>
 
-        {filteredBets.parlays.map((betGroup, groupIndex) => (
-          <View key={groupIndex}>
-            <Text style={{ paddingTop: 70 }}>Parlay:</Text>
-            {betGroup.map((bet, betIndex) => (
-                
-              <View key={betIndex}>
-                <Text>Market Type: {bet.marketType}</Text>
-                <Text>Odds: {bet.odds}</Text>
-                <Text>Sport: {bet.sport}</Text>
-                <Text>Team: {bet.team}</Text>
-                <Text>Combined Odds: {bet.combinedOdds}</Text>
-              </View>
-            ))}
-          </View>
-        ))}
-      </View>
    
              </View>
             </ScrollView>
         </TouchableWithoutFeedback>
+        <Text>Current Page: {currentPage}</Text>
+    <Button title = "Previous" onPress={handlePreviousPage} disabled={currentPage===1} />
+    <Button title = "Next" onPress={handleNextPage} />
+                </>
     );
     
 }

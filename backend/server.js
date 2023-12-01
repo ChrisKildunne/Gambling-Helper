@@ -15,6 +15,11 @@ app.get('/api/odds', async (req, res) => {
     const regions = 'us';
     const markets = 'h2h,spreads';
 
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const startIdx = (page - 1) * limit;
+    const endIdx = page * limit
+
     try {
         const fetchPromises = sports.map(sport => {
             const url = `https://api.the-odds-api.com/v4/sports/${sport}/odds/`;
@@ -45,9 +50,10 @@ app.get('/api/odds', async (req, res) => {
             const combinedOdds = parlay.reduce((acc, bet) => acc * convertToDecimal(bet.odds), 1);
             return combinedOdds >= desiredOdds;
         });
+        const paginatedParlays = qualifyingParlays.slice(startIdx, endIdx)
         qualifyingParlays = qualifyingParlays.slice(0, 10);
         console.log(qualifyingParlays)
-        res.json({ parlays: qualifyingParlays });
+        res.json({ parlays: paginatedParlays, page, limit});
     } catch (error) {
         console.error('Error processing data:', error);
         res.status(500).send('Internal Server Error');
